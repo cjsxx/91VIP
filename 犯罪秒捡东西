@@ -1,0 +1,3 @@
+game.ProximityPromptService.PromptButtonHoldBegan:Connect(function(v)
+    v.HoldDuration = 0
+end)
