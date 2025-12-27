@@ -1,0 +1,158 @@
+local fov = 100
+local maxDistance = 200
+local maxTransparency = 0
+local teamCheck = false
+local aimPart = "Head"
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Cam = game.Workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+
+local FOVring = Drawing.new("Circle")
+FOVring.Visible = true
+FOVring.Thickness = 2
+FOVring.Color = Color3.fromRGB(128, 0, 128)
+FOVring.Filled = false
+FOVring.Radius = fov
+FOVring.Position = Cam.ViewportSize / 2
+FOVring.Transparency = maxTransparency -- 初始化时设置完全透明
+
+-- 添加按键状态变量
+local isMouseButtonHeld = false
+local isGamepadButtonHeld = false
+local connection = nil
+
+local function updateDrawings()
+    FOVring.Position = Cam.ViewportSize / 2
+end
+
+local function lookAt(target)
+    local lookVector = (target - Cam.CFrame.Position).unit
+    local newCFrame = CFrame.new(Cam.CFrame.Position, Cam.CFrame.Position + lookVector)
+    Cam.CFrame = newCFrame
+end
+
+local function calculateTransparency(distance)
+    return maxTransparency -- 始终返回最大透明度
+end
+
+local function isPlayerAlive(player)
+    local character = player.Character
+    return character and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0
+end
+
+local function getClosestPlayerInFOV()
+    local nearest = nil
+    local last = math.huge
+    local playerMousePos = Cam.ViewportSize / 2
+    local localPlayer = Players.LocalPlayer
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer and (not teamCheck or player.Team ~= localPlayer.Team) and isPlayerAlive(player) then
+            local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+            local part = player.Character and player.Character:FindFirstChild(aimPart)
+            if humanoid and part then
+                local ePos, isVisible = Cam:WorldToViewportPoint(part.Position)
+                local distance = (Vector2.new(ePos.x, ePos.y) - playerMousePos).Magnitude
+
+                if distance < last and isVisible and distance < fov and distance < maxDistance then
+                    last = distance
+                    nearest = player
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+-- 启动/停止瞄准的函数
+local function updateAimState()
+    local shouldAim = isMouseButtonHeld or isGamepadButtonHeld
+    
+    if shouldAim then
+        -- 如果应该瞄准且连接不存在，则创建连接
+        if not connection then
+            connection = RunService.RenderStepped:Connect(function()
+                updateDrawings()
+                local closest = getClosestPlayerInFOV()
+                if closest and closest.Character:FindFirstChild(aimPart) then
+                    lookAt(closest.Character[aimPart].Position)
+                end
+                
+                if closest then
+                    local part = closest.Character[aimPart]
+                    local ePos, isVisible = Cam:WorldToViewportPoint(part.Position)
+                    local distance = (Vector2.new(ePos.x, ePos.y) - (Cam.ViewportSize / 2)).Magnitude
+                    FOVring.Transparency = calculateTransparency(distance)
+                else
+                    FOVring.Transparency = maxTransparency
+                end
+            end)
+        end
+    else
+        -- 如果不需要瞄准且连接存在，则断开连接
+        if connection then
+            connection:Disconnect()
+            connection = nil
+            FOVring.Transparency = maxTransparency
+        end
+    end
+end
+
+-- 检测鼠标右键按下
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isMouseButtonHeld = true
+        updateAimState()
+    end
+end)
+
+-- 检测鼠标右键释放
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isMouseButtonHeld = false
+        updateAimState()
+    end
+end)
+
+-- 检测手柄LT键按下
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.Gamepad1 and input.KeyCode == Enum.KeyCode.ButtonL2 then
+        isGamepadButtonHeld = true
+        updateAimState()
+    end
+end)
+
+-- 检测手柄LT键释放
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.UserInputType == Enum.UserInputType.Gamepad1 and input.KeyCode == Enum.KeyCode.ButtonL2 then
+        isGamepadButtonHeld = false
+        updateAimState()
+    end
+end)
+
+-- 初始状态：脚本禁用
+FOVring.Transparency = maxTransparency
+print("瞄准辅助脚本已加载，按住右键或手柄LT键启用")
+
+-- 清理函数（可选）
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+    -- 角色重生时重置脚本状态
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    isMouseButtonHeld = false
+    isGamepadButtonHeld = false
+    FOVring.Transparency = maxTransparency
+end)
