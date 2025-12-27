@@ -1,0 +1,66 @@
+if not _G.FullBrightExecuted then
+    _G.FullBrightExecuted = true
+    
+    _G.FullBrightEnabled = false
+    
+    _G.NormalLightingSettings = {
+        Brightness = game:GetService("Lighting").Brightness,
+        ClockTime = game:GetService("Lighting").ClockTime,
+        FogEnd = game:GetService("Lighting").FogEnd,
+        GlobalShadows = game:GetService("Lighting").GlobalShadows,
+        Ambient = game:GetService("Lighting").Ambient,
+        OutdoorAmbient = game:GetService("Lighting").OutdoorAmbient
+    }
+    
+    local function ToggleFullBright()
+        _G.FullBrightEnabled = not _G.FullBrightEnabled
+        local Lighting = game:GetService("Lighting")
+        
+        if _G.FullBrightEnabled then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 999999999999
+            Lighting.GlobalShadows = false
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+            Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+            print("FullBright: ON")
+        else
+            Lighting.Brightness = _G.NormalLightingSettings.Brightness
+            Lighting.ClockTime = _G.NormalLightingSettings.ClockTime
+            Lighting.FogEnd = _G.NormalLightingSettings.FogEnd
+            Lighting.GlobalShadows = _G.NormalLightingSettings.GlobalShadows
+            Lighting.Ambient = _G.NormalLightingSettings.Ambient
+            Lighting.OutdoorAmbient = _G.NormalLightingSettings.OutdoorAmbient
+            print("FullBright: OFF")
+        end
+    end
+    
+    -- Create a GUI button to toggle FullBright (optional)
+    local ScreenGui = Instance.new("ScreenGui")
+    local TextButton = Instance.new("TextButton")
+    
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.Name = "FullBrightGUI"
+    
+    TextButton.Parent = ScreenGui
+    TextButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TextButton.BorderSizePixel = 0
+    TextButton.Position = UDim2.new(0, 10, 0, 10)
+    TextButton.Size = UDim2.new(0, 120, 0, 40)
+    TextButton.Font = Enum.Font.SourceSans
+    TextButton.Text = "Toggle FullBright"
+    TextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextButton.TextSize = 14
+    
+    TextButton.MouseButton1Click:Connect(ToggleFullBright)
+    
+    -- Optional: Bind to a key (like M)
+    local UserInputService = game:GetService("UserInputService")
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.KeyCode == Enum.KeyCode.M and not gameProcessed then
+            ToggleFullBright()
+        end
+    end)
+    
+    print("FullBright script loaded! Press M or click the button to toggle.")
+end
