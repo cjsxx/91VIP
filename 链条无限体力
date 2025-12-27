@@ -1,0 +1,39 @@
+local P=game:GetService("Players")
+local LP=P.LocalPlayer
+local W=workspace
+local T={"StaminaRegen","Stamina","CombatStamina"}
+local PID=13977939077
+
+local function patch(S)
+	for _,n in ipairs(T) do
+		local o=S:FindFirstChild(n)
+		if o then
+			o.Value=100
+			o:GetPropertyChangedSignal("Value"):Connect(function()o.Value=100 end)
+		end
+	end
+end
+
+local function watch(F)
+	local S=F:FindFirstChild("Stats")
+	if S then patch(S) end
+	F.ChildAdded:Connect(function(c)if c.Name=="Stats"then patch(c)end end)
+end
+
+local function setup()
+	local _=LP.Character or LP.CharacterAdded:Wait()
+	local F=W:WaitForChild(LP.Name)
+	watch(F)
+end
+
+task.delay(3,function()
+	if game.PlaceId~=PID then return end
+	setup()
+	LP.CharacterAdded:Connect(function()
+		local F=W:WaitForChild(LP.Name)
+		watch(F)
+	end)
+end)
+
+-- JAI
+-- 09 02 25
