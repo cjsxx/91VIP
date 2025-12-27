@@ -1,0 +1,603 @@
+-- Delta GUI Script - Full Version + Aimbot + Advanced Crosshair
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "DeltaBeautifulGUI"
+gui.ResetOnSpawn = false
+pcall(function() gui.Parent = game:GetService("CoreGui") end)
+
+-- Main Frame
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromScale(0,0)
+main.Position = UDim2.fromScale(0.25,0.05)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+main.Active = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,16)
+
+-- Top bar
+local top = Instance.new("Frame", main)
+top.Size = UDim2.new(1,0,0,40)
+top.BackgroundColor3 = Color3.fromRGB(35,35,35)
+top.Active = true
+Instance.new("UICorner", top).CornerRadius = UDim.new(0,16)
+
+local title = Instance.new("TextLabel", top)
+title.Size = UDim2.new(1,-50,1,0)
+title.Position = UDim2.new(0,15,0,0)
+title.BackgroundTransparency = 1
+title.Text = "Delta GUI"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+local close = Instance.new("TextButton", top)
+close.Size = UDim2.new(0,40,0,40)
+close.Position = UDim2.new(1,-40,0,0)
+close.BackgroundTransparency = 1
+close.Text = "✕"
+close.TextColor3 = Color3.fromRGB(255,90,90)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 22
+
+-- Tabs
+local tabs = Instance.new("Frame", main)
+tabs.Position = UDim2.new(0,10,0,50)
+tabs.Size = UDim2.new(1,-20,0,35)
+tabs.BackgroundTransparency = 1
+
+local function createTab(name,x)
+	local b = Instance.new("TextButton", tabs)
+	b.Size = UDim2.new(0,120,1,0)
+	b.Position = UDim2.new(0,x,0,0)
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	b.Text = name
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+	return b
+end
+
+local tabMain = createTab("Accueil",0)
+local tabAim = createTab("Aimbot",130)
+local tabCross = createTab("Crosshair",260)
+local tabESP = createTab("ESP",390)
+
+-- Pages
+local pages = Instance.new("Frame", main)
+pages.Position = UDim2.new(0,10,0,95)
+pages.Size = UDim2.new(1,-20,1,-105)
+pages.BackgroundTransparency = 1
+
+local function createPage()
+	local f = Instance.new("Frame", pages)
+	f.Size = UDim2.new(1,0,1,0)
+	f.BackgroundTransparency = 1
+	f.Visible = false
+	return f
+end
+
+local pageMain = createPage()
+local pageAim = createPage()
+local pageCross = createPage()
+local pageESP = createPage()
+
+-- Scroll Aimbot
+local aimScroll = Instance.new("ScrollingFrame", pageAim)
+aimScroll.Size = UDim2.new(1,0,1,0)
+aimScroll.CanvasSize = UDim2.new(0,0,0,520)
+aimScroll.ScrollBarThickness = 6
+aimScroll.BackgroundTransparency = 1
+
+local lblMain = Instance.new("TextLabel", pageMain)
+lblMain.Size = UDim2.new(1,0,0,80)
+lblMain.BackgroundTransparency = 1
+lblMain.Text = "Bienvenue sur ton interface Delta 🚀"
+lblMain.TextWrapped = true
+lblMain.TextColor3 = Color3.fromRGB(200,200,200)
+lblMain.Font = Enum.Font.Gotham
+lblMain.TextSize = 16
+
+-- UI helpers
+local function createToggle(parent,text,y)
+	local b = Instance.new("TextButton", parent)
+	b.Size = UDim2.new(1,-10,0,35)
+	b.Position = UDim2.new(0,5,0,y)
+	b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	b.Text = text..": OFF"
+	return b
+end
+
+local function createSlider(parent,text,y,min,max,default)
+	local holder = Instance.new("Frame", parent)
+	holder.Size = UDim2.new(1,-10,0,55)
+	holder.Position = UDim2.new(0,5,0,y)
+	holder.BackgroundTransparency = 1
+
+	local lbl = Instance.new("TextLabel", holder)
+	lbl.Size = UDim2.new(1,0,0,20)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text..": "..default
+	lbl.TextColor3 = Color3.fromRGB(255,255,255)
+	lbl.Font = Enum.Font.Gotham
+	lbl.TextSize = 14
+
+	local bar = Instance.new("Frame", holder)
+	bar.Position = UDim2.new(0,0,0,30)
+	bar.Size = UDim2.new(1,0,0,15)
+	bar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
+
+	local fill = Instance.new("Frame", bar)
+	fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
+	fill.BackgroundColor3 = Color3.fromRGB(80,180,120)
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
+
+	return lbl, bar, fill
+end
+
+-- Aimbot UI
+local aimbotBtn = createToggle(aimScroll,"Aimbot",0)
+local showFovBtn = createToggle(aimScroll,"Show FOV",45)
+local ignoreFovBtn = createToggle(aimScroll,"Ignore FOV",90)
+local teamBtn = createToggle(aimScroll,"Team Check",135)
+local wallBtn = createToggle(aimScroll,"Wall Check",180)
+
+local aimTarget = "Head"
+local targets = {"Head","HumanoidRootPart","Random"}
+local aimTargetBtn = createToggle(aimScroll,"Aim Target",225)
+aimTargetBtn.Text = "Aim Target: Head"
+
+local fovLbl,fovBar,fovFill = createSlider(aimScroll,"FOV Size",235,50,400,150)
+local smoothLbl,smoothBar,smoothFill = createSlider(aimScroll,"Aim Smooth",300,1,20,5)
+
+-- Crosshair UI
+local crossToggle = createToggle(pageCross,"Enable Crosshair",0)
+
+local crossTypes = {"Cross","Dot","Circle","TShape"}
+local crossType = "Cross"
+local crossTypeBtn = createToggle(pageCross,"Crosshair Type",45)
+crossTypeBtn.Text = "Crosshair Type: Cross"
+
+local crossSizeLbl,crossSizeBar,crossSizeFill = createSlider(pageCross,"Size",105,5,40,15)
+local rotLbl,rotBar,rotFill = createSlider(pageCross,"Rotation",170,0,180,0)
+
+local rLbl,rBar,rFill = createSlider(pageCross,"Red",235,0,255,255)
+local gLbl,gBar,gFill = createSlider(pageCross,"Green",300,0,255,255)
+local bLbl,bBar,bFill = createSlider(pageCross,"Blue",365,0,255,255)
+
+local outlineToggle = createToggle(pageCross,"Outline",430)
+
+local espToggle = createToggle(pageESP,"Enable ESP",0)
+local boxToggle = createToggle(pageESP,"ESP Box",45)
+local nameToggle = createToggle(pageESP,"ESP Name",90)
+local distToggle = createToggle(pageESP,"ESP Distance",135)
+
+-- Tabs logic
+local function show(page)
+	pageMain.Visible = false
+	pageAim.Visible = false
+	pageCross.Visible = false
+	pageESP.Visible = false -- ✅ AJOUT IMPORTANT
+	page.Visible = true
+end
+show(pageMain)
+tabMain.MouseButton1Click:Connect(function() show(pageMain) end)
+tabAim.MouseButton1Click:Connect(function() show(pageAim) end)
+tabCross.MouseButton1Click:Connect(function() show(pageCross) end)
+tabESP.MouseButton1Click:Connect(function()
+	show(pageESP)
+end)
+
+-- Values
+local aimbot=false
+local showFov=false
+local ignoreFov=false
+local teamCheck=false
+local wallCheck = false
+
+local fov=60
+
+local smooth=3
+
+local crosshair=false
+local crossSize=9
+local crossRot=0
+local r,g,b = 255,255,255
+local crossColor = Color3.fromRGB(255,255,255)
+local outline=false
+
+local espEnabled = false
+local espBox = false
+local espName = false
+local espDist = false
+
+-- Toggles
+aimbotBtn.MouseButton1Click:Connect(function()
+	aimbot=not aimbot
+	aimbotBtn.Text="Aimbot: "..(aimbot and "ON" or "OFF")
+end)
+showFovBtn.MouseButton1Click:Connect(function()
+	showFov=not showFov
+	showFovBtn.Text="Show FOV: "..(showFov and "ON" or "OFF")
+end)
+ignoreFovBtn.MouseButton1Click:Connect(function()
+	ignoreFov=not ignoreFov
+	ignoreFovBtn.Text="Ignore FOV: "..(ignoreFov and "ON" or "OFF")
+end)
+teamBtn.MouseButton1Click:Connect(function()
+	teamCheck=not teamCheck
+	teamBtn.Text="Team Check: "..(teamCheck and "ON" or "OFF")
+end)
+
+wallBtn.MouseButton1Click:Connect(function()
+	wallCheck = not wallCheck
+	wallBtn.Text = "Wall Check: "..(wallCheck and "ON" or "OFF")
+end)
+
+aimTargetBtn.MouseButton1Click:Connect(function()
+	local i = table.find(targets,aimTarget) or 1
+	i=i+1 if i>#targets then i=1 end
+	aimTarget=targets[i]
+	aimTargetBtn.Text="Aim Target: "..aimTarget
+end)
+
+crossToggle.MouseButton1Click:Connect(function()
+	crosshair=not crosshair
+	crossToggle.Text="Enable Crosshair: "..(crosshair and "ON" or "OFF")
+end)
+
+crossTypeBtn.MouseButton1Click:Connect(function()
+	local i = table.find(crossTypes,crossType) or 1
+	i=i+1 if i>#crossTypes then i=1 end
+	crossType=crossTypes[i]
+	crossTypeBtn.Text="Crosshair Type: "..crossType
+end)
+
+outlineToggle.MouseButton1Click:Connect(function()
+	outline=not outline
+	outlineToggle.Text="Outline: "..(outline and "ON" or "OFF")
+end)
+
+espToggle.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	espToggle.Text = "Enable ESP: "..(espEnabled and "ON" or "OFF")
+end)
+
+boxToggle.MouseButton1Click:Connect(function()
+	espBox = not espBox
+	boxToggle.Text = "ESP Box: "..(espBox and "ON" or "OFF")
+end)
+
+nameToggle.MouseButton1Click:Connect(function()
+	espName = not espName
+	nameToggle.Text = "ESP Name: "..(espName and "ON" or "OFF")
+end)
+
+distToggle.MouseButton1Click:Connect(function()
+	espDist = not espDist
+	distToggle.Text = "ESP Distance: "..(espDist and "ON" or "OFF")
+end)
+
+-- Slider logic
+local function slider(bar,fill,min,max,set)
+	local dragging=false
+	bar.InputBegan:Connect(function(i)
+		if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end
+	end)
+	UIS.InputEnded:Connect(function(i)
+		if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end
+	end)
+	UIS.InputChanged:Connect(function(i)
+		if dragging then
+			local pos=math.clamp((i.Position.X-bar.AbsolutePosition.X)/bar.AbsoluteSize.X,0,1)
+			fill.Size=UDim2.new(pos,0,1,0)
+			set(min+(max-min)*pos)
+		end
+	end)
+end
+
+slider(fovBar,fovFill,50,400,function(v)
+	fov=math.floor(v)
+	fovLbl.Text="FOV Size: "..fov
+end)
+slider(smoothBar,smoothFill,1,20,function(v)
+	smooth=math.max(1,math.floor(v))
+	smoothLbl.Text="Aim Smooth: "..smooth
+end)
+slider(crossSizeBar,crossSizeFill,5,40,function(v)
+	crossSize=math.floor(v)
+	crossSizeLbl.Text="Size: "..crossSize
+end)
+slider(rotBar,rotFill,0,180,function(v)
+	crossRot=math.floor(v)
+	rotLbl.Text="Rotation: "..crossRot
+end)
+slider(rBar,rFill,0,255,function(v)
+	r=math.floor(v) crossColor=Color3.fromRGB(r,g,b)
+	rLbl.Text="Red: "..r
+end)
+slider(gBar,gFill,0,255,function(v)
+	g=math.floor(v) crossColor=Color3.fromRGB(r,g,b)
+	gLbl.Text="Green: "..g
+end)
+slider(bBar,bFill,0,255,function(v)
+	b=math.floor(v) crossColor=Color3.fromRGB(r,g,b)
+	bLbl.Text="Blue: "..b
+end)
+
+-- Drawing objects
+local fovCircle, hLine, vLine, dot, circle, tLine, hOL, vOL, dotOL, circleOL, tOL
+pcall(function()
+	fovCircle = Drawing.new("Circle")
+	fovCircle.Thickness=2
+	fovCircle.NumSides=100
+	fovCircle.Color=Color3.fromRGB(80,180,120)
+	fovCircle.Filled=false
+
+	hLine = Drawing.new("Line")
+	vLine = Drawing.new("Line")
+	dot = Drawing.new("Circle")
+	circle = Drawing.new("Circle")
+	tLine = Drawing.new("Line")
+
+	hOL = Drawing.new("Line")
+	vOL = Drawing.new("Line")
+	dotOL = Drawing.new("Circle")
+	circleOL = Drawing.new("Circle")
+	tOL = Drawing.new("Line")
+end)
+
+local espObjects = {}
+
+local function createESP(plr)
+	local box = Drawing.new("Square")
+	box.Thickness = 2
+	box.Filled = false
+	box.Color = Color3.fromRGB(255,255,255)
+
+	local name = Drawing.new("Text")
+	name.Size = 16
+	name.Center = true
+	name.Outline = true
+	name.Color = Color3.fromRGB(255,255,255)
+
+	local dist = Drawing.new("Text")
+	dist.Size = 14
+	dist.Center = true
+	dist.Outline = true
+	dist.Color = Color3.fromRGB(180,180,180)
+
+	espObjects[plr] = {box=box,name=name,dist=dist}
+end
+
+local function removeESP(plr)
+	if espObjects[plr] then
+		for _,v in pairs(espObjects[plr]) do
+			v:Remove()
+		end
+		espObjects[plr] = nil
+	end
+end
+
+for _,p in pairs(Players:GetPlayers()) do
+	if p ~= player then createESP(p) end
+end
+
+Players.PlayerAdded:Connect(function(p)
+	if p ~= player then createESP(p) end
+end)
+
+Players.PlayerRemoving:Connect(removeESP)
+
+local function screenCenter()
+	local v = Camera.ViewportSize
+	return Vector2.new(v.X/2,v.Y/2)
+end
+
+local function getTargetPart(char)
+	if not char then return nil end
+	if aimTarget=="Random" then
+		local t={}
+		if char:FindFirstChild("Head") then table.insert(t,char.Head) end
+		if char:FindFirstChild("HumanoidRootPart") then table.insert(t,char.HumanoidRootPart) end
+		if #t>0 then return t[math.random(1,#t)] end
+	else
+		return char:FindFirstChild(aimTarget)
+	end
+end
+
+local function isVisible(part, char)
+	local origin = Camera.CFrame.Position
+	local direction = (part.Position - origin)
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	params.FilterDescendantsInstances = {player.Character, char}
+
+	local result = workspace:Raycast(origin, direction, params)
+
+	return result == nil
+end
+
+local function getClosest()
+	local center=screenCenter()
+	local closest,dist=nil,math.huge
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr~=player and plr.Character then
+			if teamCheck and plr.Team==player.Team then continue end
+			local part=getTargetPart(plr.Character)
+			if part and (not wallCheck or isVisible(part, plr.Character)) then
+				local pos,onScreen=Camera:WorldToViewportPoint(part.Position)
+				if onScreen then
+					local d=(Vector2.new(pos.X,pos.Y)-center).Magnitude
+					if (ignoreFov or d<=fov) and d<dist then
+						dist=d closest=plr
+					end
+				end
+			end
+		end
+	end
+	return closest
+end
+
+RunService.RenderStepped:Connect(function()
+	local center=screenCenter()
+
+	-- FOV
+	if fovCircle then
+		fovCircle.Position=center
+		fovCircle.Radius=fov
+		fovCircle.Visible=showFov
+	end
+
+	-- Hide all crosshair drawings
+	for _,d in pairs({hLine,vLine,dot,circle,tLine,hOL,vOL,dotOL,circleOL,tOL}) do
+		if d then d.Visible=false end
+	end
+
+	if crosshair then
+		local s=crossSize
+		local rad=math.rad(crossRot)
+		local cos,sin=math.cos(rad),math.sin(rad)
+		local function rot(x,y)
+			return Vector2.new(center.X + (x*cos - y*sin), center.Y + (x*sin + y*cos))
+		end
+
+		if crossType=="Cross" then
+			hLine.From=rot(-s,0); hLine.To=rot(s,0)
+			vLine.From=rot(0,-s); vLine.To=rot(0,s)
+			hLine.Color=crossColor; vLine.Color=crossColor
+			hLine.Visible=true; vLine.Visible=true
+		elseif crossType=="Dot" then
+			dot.Position=center; dot.Radius=math.max(2,s/5)
+			dot.Color=crossColor; dot.Filled=true; dot.Visible=true
+		elseif crossType=="Circle" then
+			circle.Position=center; circle.Radius=s
+			circle.Color=crossColor; circle.Thickness=2
+			circle.Filled=false; circle.Visible=true
+		elseif crossType=="TShape" then
+			hLine.From=rot(-s,0); hLine.To=rot(s,0)
+			tLine.From=rot(0,0); tLine.To=rot(0,s)
+			hLine.Color=crossColor; tLine.Color=crossColor
+			hLine.Visible=true; tLine.Visible=true
+		end
+	end
+
+	-- Aimbot
+	if aimbot then
+		local t=getClosest()
+		if t and t.Character then
+			local part=getTargetPart(t.Character)
+			if part then
+				local cf=Camera.CFrame
+				local strength=math.clamp(1/smooth,0.01,1)
+				Camera.CFrame = cf:Lerp(CFrame.new(cf.Position,part.Position),strength)
+			end
+		end
+	end
+
+-- ESP
+	for plr,objs in pairs(espObjects) do
+		local char = plr.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+		if espEnabled and hrp and hum and hum.Health > 0 then
+			local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+			if onScreen then
+				local scale = 1 / (pos.Z / 50)
+				local size = Vector2.new(40,60) * scale
+
+				if espBox then
+					objs.box.Size = size
+					objs.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+					objs.box.Visible = true
+				else
+					objs.box.Visible = false
+				end
+
+				if espName then
+					objs.name.Text = plr.Name
+					objs.name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
+					objs.name.Visible = true
+				else
+					objs.name.Visible = false
+				end
+
+				if espDist then
+					local studs = math.floor((hrp.Position - Camera.CFrame.Position).Magnitude)
+					objs.dist.Text = studs.." studs"
+					objs.dist.Position = Vector2.new(pos.X, pos.Y + size.Y/2 + 2)
+					objs.dist.Visible = true
+				else
+					objs.dist.Visible = false
+				end
+			else
+				objs.box.Visible=false
+				objs.name.Visible=false
+				objs.dist.Visible=false
+			end
+		else
+			objs.box.Visible=false
+			objs.name.Visible=false
+			objs.dist.Visible=false
+		end
+	end
+end)
+
+-- Open / Close
+local reopen = Instance.new("TextButton", gui)
+reopen.Size = UDim2.new(0,50,0,50)
+reopen.Position = UDim2.new(0,20,0.5,-25)
+reopen.BackgroundColor3 = Color3.fromRGB(60,180,120)
+reopen.Text="°"
+reopen.TextColor3=Color3.fromRGB(255,255,255)
+reopen.Font=Enum.Font.GothamBold
+reopen.TextSize=22
+reopen.Visible=false
+Instance.new("UICorner",reopen).CornerRadius=UDim.new(1,0)
+
+local OPEN_SIZE = UDim2.fromScale(0.7,0.85)
+
+local function openGUI()
+	main.Visible=true
+	TweenService:Create(main,TweenInfo.new(0.6,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=OPEN_SIZE}):Play()
+end
+local function closeGUI()
+	local t=TweenService:Create(main,TweenInfo.new(0.4,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Size=UDim2.fromScale(0,0)})
+	t:Play() t.Completed:Wait()
+	main.Visible=false reopen.Visible=true
+end
+openGUI()
+close.MouseButton1Click:Connect(closeGUI)
+reopen.MouseButton1Click:Connect(function()
+	reopen.Visible=false openGUI()
+end)
+
+-- Drag
+local dragging,dragStart,startPos=false
+top.InputBegan:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+		dragging=true dragStart=i.Position startPos=main.Position
+	end
+end)
+UIS.InputChanged:Connect(function(i)
+	if dragging then
+		local d=i.Position-dragStart
+		main.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
+	end
+end)
+UIS.InputEnded:Connect(function() dragging=false end)
